@@ -5,10 +5,12 @@ import com.pg.test.AppConfig;
 import java.beans.Introspector;
 import java.io.File;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class ApplicationContext {
 
@@ -19,6 +21,15 @@ public class ApplicationContext {
     public ApplicationContext(Class<AppConfig> appConfigClass) {
         // 扫描
         scan(appConfigClass);
+
+        //创建bean
+        for (Map.Entry<String, BeanDefinition> entry : beanDefinitionMap.entrySet()){
+            String beanName = entry.getKey();
+            BeanDefinition beanDefinition = entry.getValue();
+            if (!"prototype".equals(beanDefinition.scope)) {
+                singletonMap.put(beanName,createBean(beanName,beanDefinition));
+            }
+            }
     }
 
 
@@ -66,9 +77,10 @@ public class ApplicationContext {
                                 beanDefinition.setScope("prototype");
                             }else {
                                 beanDefinition.setScope("singleton");
-                                Object bean = createBean(beanName, beanDefinition);
-                                singletonMap.put(beanName,bean);
+
                             }
+
+
 
                         }
                     } catch (ClassNotFoundException e) {
@@ -85,6 +97,15 @@ public class ApplicationContext {
         Object bean = null;
         try {
             bean = clazz.getConstructor().newInstance();
+            for (Field field : clazz.getDeclaredFields()) {
+                if (field.isAnnotationPresent(Autowired.class)) {
+                    field.setAccessible(true);
+                    if(Objects.isNull(singletonMap.get(field.getName()))){
+                        createBean(field.getName(),beanDefinitionMap.get(field.getName()));
+                    }
+                    field.set(bean,singletonMap.get(field.getName()));
+                }
+            }
            return bean;
         } catch (InstantiationException e) {
             throw new RuntimeException(e);

@@ -1,5 +1,6 @@
 package com.pg.test;
 
+import com.pg.service.UserService;
 import com.pg.spring.ApplicationContext;
 
 public class PGBootApplication {
@@ -7,10 +8,11 @@ public class PGBootApplication {
     // 启动方法
     public static void main(String[] args) {
         ApplicationContext applicationContext = new ApplicationContext(AppConfig.class);
-        System.out.println(applicationContext.getBean("userService"));
-        System.out.println(applicationContext.getBean("userService"));
-        System.out.println(applicationContext.getBean("orderService"));
-        System.out.println(applicationContext.getBean("orderService"));
+        UserService userService = (UserService) applicationContext.getBean("userService");
+        System.out.println(userService);
+        userService.test();
+
+
     }
 
 }
